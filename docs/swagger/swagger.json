@@ -1,0 +1,945 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Event Management Backend API",
+    "description": "A comprehensive backend API for event management system with user authentication, event management, and participant tracking.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "API Support",
+      "email": "support@eventmanagement.com"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000",
+      "description": "Development server"
+    },
+    {
+      "url": "https://api.eventmanagement.com",
+      "description": "Production server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "User authentication and authorization endpoints"
+    },
+    {
+      "name": "Health",
+      "description": "System health and status endpoints"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Health Check",
+        "description": "Check if the server is running and healthy",
+        "responses": {
+          "200": {
+            "description": "Server is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Server is running",
+                  "timestamp": "2024-01-15T10:30:00.000Z"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "API Information",
+        "description": "Get basic API information and available endpoints",
+        "responses": {
+          "200": {
+            "description": "API information retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInfoResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Register New User",
+        "description": "Create a new user account with email and password",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              },
+              "examples": {
+                "basic_user": {
+                  "summary": "Basic User Registration",
+                  "value": {
+                    "email": "john.doe@example.com",
+                    "password": "Password123!",
+                    "firstName": "John",
+                    "lastName": "Doe"
+                  }
+                },
+                "complete_user": {
+                  "summary": "Complete User Registration",
+                  "value": {
+                    "email": "jane.smith@example.com",
+                    "password": "Password123!",
+                    "firstName": "Jane",
+                    "lastName": "Smith",
+                    "phone": "+1234567890",
+                    "address": {
+                      "street": "123 Main St",
+                      "city": "New York",
+                      "state": "NY",
+                      "zipCode": "10001"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "User registered successfully",
+                  "data": {
+                    "user": {
+                      "_id": "507f1f77bcf86cd799439011",
+                      "email": "john.doe@example.com",
+                      "firstName": "John",
+                      "lastName": "Doe",
+                      "role": "user",
+                      "isBlocked": false,
+                      "createdAt": "2024-01-15T10:30:00.000Z",
+                      "updatedAt": "2024-01-15T10:30:00.000Z"
+                    },
+                    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error or user already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "validation_error": {
+                    "summary": "Validation Error",
+                    "value": {
+                      "success": false,
+                      "message": "Validation error",
+                      "errors": "Email is required, Password must be at least 6 characters long"
+                    }
+                  },
+                  "user_exists": {
+                    "summary": "User Already Exists",
+                    "value": {
+                      "success": false,
+                      "message": "User with this email already exists"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Too many authentication attempts, please try again later"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "User Login",
+        "description": "Authenticate user with email and password",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              },
+              "examples": {
+                "admin_login": {
+                  "summary": "Admin Login",
+                  "value": {
+                    "email": "admin@eventmanagement.com",
+                    "password": "Admin123!"
+                  }
+                },
+                "user_login": {
+                  "summary": "Regular User Login",
+                  "value": {
+                    "email": "john.doe@example.com",
+                    "password": "Password123!"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Login successful",
+                  "data": {
+                    "user": {
+                      "_id": "507f1f77bcf86cd799439011",
+                      "email": "admin@eventmanagement.com",
+                      "firstName": "Admin",
+                      "lastName": "User",
+                      "role": "admin",
+                      "isBlocked": false,
+                      "createdAt": "2024-01-15T10:30:00.000Z",
+                      "updatedAt": "2024-01-15T10:30:00.000Z"
+                    },
+                    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Validation error",
+                  "errors": "Email is required, Password is required"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials or account blocked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "invalid_credentials": {
+                    "summary": "Invalid Credentials",
+                    "value": {
+                      "success": false,
+                      "message": "Invalid email or password"
+                    }
+                  },
+                  "account_blocked": {
+                    "summary": "Account Blocked",
+                    "value": {
+                      "success": false,
+                      "message": "Account is blocked. Please contact administrator"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Too many authentication attempts, please try again later"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Refresh Access Token",
+        "description": "Get a new access token using a valid refresh token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenRequest"
+              },
+              "example": {
+                "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token refreshed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshTokenResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Token refreshed successfully",
+                  "data": {
+                    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Validation error",
+                  "errors": "Refresh token is required"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired refresh token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "invalid_token": {
+                    "summary": "Invalid Token",
+                    "value": {
+                      "success": false,
+                      "message": "Invalid refresh token"
+                    }
+                  },
+                  "expired_token": {
+                    "summary": "Expired Token",
+                    "value": {
+                      "success": false,
+                      "message": "Refresh token has expired"
+                    }
+                  },
+                  "account_blocked": {
+                    "summary": "Account Blocked",
+                    "value": {
+                      "success": false,
+                      "message": "Account is blocked"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Logout User",
+        "description": "Logout user from current device by invalidating refresh token",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogoutRequest"
+              },
+              "example": {
+                "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Logout successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Logout successful"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Access token is required"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/logout-all": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Logout from All Devices",
+        "description": "Logout user from all devices by invalidating all refresh tokens",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Logout from all devices successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Logged out from all devices successfully"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Access token is required"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "Get Current User Profile",
+        "description": "Get the profile information of the currently authenticated user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User profile retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "User profile retrieved successfully",
+                  "data": {
+                    "user": {
+                      "_id": "507f1f77bcf86cd799439011",
+                      "email": "admin@eventmanagement.com",
+                      "firstName": "Admin",
+                      "lastName": "User",
+                      "role": "admin",
+                      "isBlocked": false,
+                      "phone": "+1234567890",
+                      "address": {
+                        "street": "123 Admin Street",
+                        "city": "Admin City",
+                        "state": "Admin State",
+                        "zipCode": "12345"
+                      },
+                      "createdAt": "2024-01-15T10:30:00.000Z",
+                      "updatedAt": "2024-01-15T10:30:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Access token is required"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "User not found"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT access token obtained from login or refresh endpoints"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "description": "Unique user identifier",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User's email address",
+            "example": "john.doe@example.com"
+          },
+          "firstName": {
+            "type": "string",
+            "description": "User's first name",
+            "minLength": 2,
+            "maxLength": 50,
+            "example": "John"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "User's last name",
+            "minLength": 2,
+            "maxLength": 50,
+            "example": "Doe"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["admin", "user"],
+            "description": "User's role in the system",
+            "example": "user"
+          },
+          "isBlocked": {
+            "type": "boolean",
+            "description": "Whether the user account is blocked",
+            "example": false
+          },
+          "phone": {
+            "type": "string",
+            "description": "User's phone number",
+            "pattern": "^[\\+]?[1-9][\\d]{0,15}$",
+            "example": "+1234567890"
+          },
+          "address": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "User creation timestamp",
+            "example": "2024-01-15T10:30:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "User last update timestamp",
+            "example": "2024-01-15T10:30:00.000Z"
+          }
+        },
+        "required": ["_id", "email", "firstName", "lastName", "role", "isBlocked"]
+      },
+      "Address": {
+        "type": "object",
+        "properties": {
+          "street": {
+            "type": "string",
+            "description": "Street address",
+            "maxLength": 100,
+            "example": "123 Main Street"
+          },
+          "city": {
+            "type": "string",
+            "description": "City name",
+            "maxLength": 50,
+            "example": "New York"
+          },
+          "state": {
+            "type": "string",
+            "description": "State or province",
+            "maxLength": 50,
+            "example": "NY"
+          },
+          "zipCode": {
+            "type": "string",
+            "description": "ZIP or postal code",
+            "maxLength": 10,
+            "example": "10001"
+          }
+        }
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User's email address",
+            "example": "john.doe@example.com"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 6,
+            "description": "User's password",
+            "example": "Password123!"
+          },
+          "firstName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50,
+            "description": "User's first name",
+            "example": "John"
+          },
+          "lastName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50,
+            "description": "User's last name",
+            "example": "Doe"
+          },
+          "phone": {
+            "type": "string",
+            "pattern": "^[\\+]?[1-9][\\d]{0,15}$",
+            "description": "User's phone number (optional)",
+            "example": "+1234567890"
+          },
+          "address": {
+            "$ref": "#/components/schemas/Address"
+          }
+        },
+        "required": ["email", "password", "firstName", "lastName"]
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User's email address",
+            "example": "john.doe@example.com"
+          },
+          "password": {
+            "type": "string",
+            "description": "User's password",
+            "example": "Password123!"
+          }
+        },
+        "required": ["email", "password"]
+      },
+      "RefreshTokenRequest": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "description": "Valid refresh token",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        },
+        "required": ["refreshToken"]
+      },
+      "LogoutRequest": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "description": "Refresh token to invalidate",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        },
+        "required": ["refreshToken"]
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message",
+            "example": "User registered successfully"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "user": {
+                "$ref": "#/components/schemas/User"
+              },
+              "accessToken": {
+                "type": "string",
+                "description": "JWT access token (expires in 15 minutes)",
+                "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+              },
+              "refreshToken": {
+                "type": "string",
+                "description": "JWT refresh token (expires in 7 days)",
+                "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+              }
+            },
+            "required": ["user", "accessToken", "refreshToken"]
+          }
+        },
+        "required": ["success", "message", "data"]
+      },
+      "RefreshTokenResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message",
+            "example": "Token refreshed successfully"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "accessToken": {
+                "type": "string",
+                "description": "New JWT access token (expires in 15 minutes)",
+                "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+              },
+              "refreshToken": {
+                "type": "string",
+                "description": "New JWT refresh token (expires in 7 days)",
+                "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+              }
+            },
+            "required": ["accessToken", "refreshToken"]
+          }
+        },
+        "required": ["success", "message", "data"]
+      },
+      "UserProfileResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message",
+            "example": "User profile retrieved successfully"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "user": {
+                "$ref": "#/components/schemas/User"
+              }
+            },
+            "required": ["user"]
+          }
+        },
+        "required": ["success", "message", "data"]
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message",
+            "example": "Operation completed successfully"
+          }
+        },
+        "required": ["success", "message"]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message",
+            "example": "An error occurred"
+          },
+          "errors": {
+            "type": "string",
+            "description": "Detailed error information (for validation errors)",
+            "example": "Email is required, Password must be at least 6 characters long"
+          }
+        },
+        "required": ["success", "message"]
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the server is healthy",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Health status message",
+            "example": "Server is running"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Current server timestamp",
+            "example": "2024-01-15T10:30:00.000Z"
+          }
+        },
+        "required": ["success", "message", "timestamp"]
+      },
+      "ApiInfoResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "API information message",
+            "example": "Event Management API"
+          },
+          "version": {
+            "type": "string",
+            "description": "API version",
+            "example": "1.0.0"
+          },
+          "endpoints": {
+            "type": "object",
+            "properties": {
+              "auth": {
+                "type": "string",
+                "description": "Authentication endpoints",
+                "example": "/api/auth"
+              },
+              "health": {
+                "type": "string",
+                "description": "Health check endpoint",
+                "example": "/health"
+              }
+            }
+          }
+        },
+        "required": ["success", "message", "version", "endpoints"]
+      }
+    }
+  }
+}
