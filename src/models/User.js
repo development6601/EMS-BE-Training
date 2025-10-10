@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema(
     dateOfBirth: {
       type: Date,
       validate: {
-        validator: function(value) {
+        validator: function (value) {
           return !value || value < new Date();
         },
         message: 'Date of birth must be in the past'
@@ -155,7 +155,7 @@ userSchema.index({ role: 1 });
 // Hash password before saving
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
-  
+
   try {
     const salt = await bcrypt.genSalt(12);
     this.password = await bcrypt.hash(this.password, salt);

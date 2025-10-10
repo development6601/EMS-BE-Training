@@ -11,6 +11,8 @@ const logger = require('./utils/logger');
 
 // Import routes
 const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
+const eventRoutes = require('./routes/events');
 
 // Import middleware
 const { errorHandler, notFound } = require('./middleware/errorHandler');
@@ -95,8 +97,10 @@ class App {
       });
     });
 
-    // API routes
-    this.app.use('/api/auth', authRoutes);
+        // API routes
+        this.app.use('/api/auth', authRoutes);
+        this.app.use('/api/users', userRoutes);
+        this.app.use('/api/events', eventRoutes);
 
     // API documentation route
     this.app.get('/api', (req, res) => {
@@ -108,10 +112,12 @@ class App {
           swagger: '/api-docs',
           health: '/health',
         },
-        endpoints: {
-          auth: '/api/auth',
-          health: '/health',
-        },
+            endpoints: {
+              auth: '/api/auth',
+              users: '/api/users',
+              events: '/api/events',
+              health: '/health',
+            },
       });
     });
   }
