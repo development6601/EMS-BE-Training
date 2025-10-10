@@ -1,6 +1,7 @@
 const EventParticipant = require('../models/EventParticipant');
 const Event = require('../models/Event');
 const User = require('../models/User');
+const NotificationService = require('./notificationService');
 
 class ParticipantService {
   // Join event
@@ -198,6 +199,14 @@ class ParticipantService {
         { $inc: { currentParticipants: 1 } }
       );
 
+      // Create approval notification
+      try {
+        await NotificationService.createParticipantApprovalNotification(participantId);
+      } catch (notificationError) {
+        // Log notification error but don't fail the approval
+        console.error('Failed to create approval notification:', notificationError.message);
+      }
+
       return participant;
     } catch (error) {
       throw error;
@@ -229,6 +238,14 @@ class ParticipantService {
       }
 
       await participant.save();
+
+      // Create rejection notification
+      try {
+        await NotificationService.createParticipantRejectionNotification(participantId, rejectionReason);
+      } catch (notificationError) {
+        // Log notification error but don't fail the rejection
+        console.error('Failed to create rejection notification:', notificationError.message);
+      }
 
       return participant;
     } catch (error) {
@@ -273,6 +290,24 @@ class ParticipantService {
 
       for (const [eventId, count] of Object.entries(eventUpdates)) {
         await Event.findByIdAndUpdate(eventId, { $inc: { currentParticipants: count } });
+      }
+
+      // Create approval notifications for all approved participants
+      try {
+        const approvedParticipants = await EventParticipant.find({
+          _id: { $in: participantIds },
+          status: 'approved',
+        });
+
+        for (const participant of approvedParticipants) {
+          try {
+            await NotificationService.createParticipantApprovalNotification(participant._id);
+          } catch (notificationError) {
+            console.error(`Failed to create approval notification for participant ${participant._id}:`, notificationError.message);
+          }
+        }
+      } catch (notificationError) {
+        console.error('Failed to create bulk approval notifications:', notificationError.message);
       }
 
       return {

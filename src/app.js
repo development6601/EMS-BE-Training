@@ -15,6 +15,7 @@ const userRoutes = require('./routes/users');
 const eventRoutes = require('./routes/events');
 const participantRoutes = require('./routes/participants');
 const adminRoutes = require('./routes/admin');
+const notificationRoutes = require('./routes/notifications');
 
 // Import middleware
 const { errorHandler, notFound } = require('./middleware/errorHandler');
@@ -105,6 +106,7 @@ class App {
         this.app.use('/api/events', eventRoutes);
         this.app.use('/api/participants', participantRoutes);
         this.app.use('/api/admin', adminRoutes);
+        this.app.use('/api/notifications', notificationRoutes);
 
     // API documentation route
     this.app.get('/api', (req, res) => {
@@ -122,6 +124,7 @@ class App {
               events: '/api/events',
               participants: '/api/participants',
               admin: '/api/admin',
+              notifications: '/api/notifications',
               health: '/health',
             },
       });
