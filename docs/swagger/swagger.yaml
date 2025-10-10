@@ -49,6 +49,10 @@ tags:
     description: User management and profile endpoints
   - name: Event Management
     description: Event CRUD operations and management endpoints
+  - name: Event Participation
+    description: Event participation and participant management endpoints
+  - name: Admin Dashboard
+    description: Admin dashboard analytics and statistics endpoints
   - name: Health
     description: System health and status endpoints
 
@@ -1419,6 +1423,1565 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /api/participants/join/{eventId}:
+    post:
+      tags:
+        - Event Participation
+      summary: Join Event
+      description: Apply to join an event (User only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          description: Event ID
+          schema:
+            type: string
+            example: 507f1f77bcf86cd799439011
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                emergencyContact:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      maxLength: 100
+                      description: Emergency contact name
+                      example: Jane Doe
+                    phone:
+                      type: string
+                      pattern: '^[\+]?[1-9][\d]{0,15}$'
+                      description: Emergency contact phone
+                      example: '+1234567890'
+                    relationship:
+                      type: string
+                      maxLength: 50
+                      description: Relationship to participant
+                      example: Spouse
+                dietaryRequirements:
+                  type: string
+                  maxLength: 500
+                  description: Dietary requirements or restrictions
+                  example: Vegetarian, no nuts
+                accessibilityNeeds:
+                  type: string
+                  maxLength: 500
+                  description: Accessibility needs
+                  example: Wheelchair accessible seating required
+                notes:
+                  type: string
+                  maxLength: 1000
+                  description: Additional notes
+                  example: First time attending this type of event
+      responses:
+        '201':
+          description: Successfully applied for the event
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Successfully applied for the event
+                  data:
+                    type: object
+                    properties:
+                      participant:
+                        $ref: '#/components/schemas/EventParticipant'
+        '400':
+          description: Validation error or event not available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - User access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/participants/leave/{eventId}:
+    delete:
+      tags:
+        - Event Participation
+      summary: Leave Event
+      description: Leave an event (User only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          description: Event ID
+          schema:
+            type: string
+            example: 507f1f77bcf86cd799439011
+      responses:
+        '200':
+          description: Successfully left the event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Cannot leave approved event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - User access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/participants/my-events:
+    get:
+      tags:
+        - Event Participation
+      summary: Get My Events
+      description: Get user's events with participation status (User only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Number of events per page
+          required: false
+          schema:
+            type: integer
+            default: 10
+        - name: status
+          in: query
+          description: Filter by participation status
+          required: false
+          schema:
+            type: string
+            enum: [pending, approved, rejected]
+      responses:
+        '200':
+          description: My events retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: My events retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      participants:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/EventParticipant'
+                      pagination:
+                        type: object
+                        properties:
+                          currentPage:
+                            type: integer
+                            example: 1
+                          totalPages:
+                            type: integer
+                            example: 3
+                          totalParticipants:
+                            type: integer
+                            example: 25
+                          hasNextPage:
+                            type: boolean
+                            example: true
+                          hasPrevPage:
+                            type: boolean
+                            example: false
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - User access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/participants/event/{eventId}:
+    get:
+      tags:
+        - Event Participation
+      summary: Get Event Participants
+      description: Get participants for a specific event (Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          description: Event ID
+          schema:
+            type: string
+            example: 507f1f77bcf86cd799439011
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Number of participants per page
+          required: false
+          schema:
+            type: integer
+            default: 10
+        - name: status
+          in: query
+          description: Filter by participation status
+          required: false
+          schema:
+            type: string
+            enum: [pending, approved, rejected]
+        - name: search
+          in: query
+          description: Search by participant name or email
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Event participants retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Event participants retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      participants:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/EventParticipant'
+                      pagination:
+                        type: object
+                        properties:
+                          currentPage:
+                            type: integer
+                            example: 1
+                          totalPages:
+                            type: integer
+                            example: 5
+                          totalParticipants:
+                            type: integer
+                            example: 50
+                          hasNextPage:
+                            type: boolean
+                            example: true
+                          hasPrevPage:
+                            type: boolean
+                            example: false
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/participants/stats:
+    get:
+      tags:
+        - Event Participation
+      summary: Get Participant Statistics
+      description: Get participant statistics for admin dashboard (Admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Participant statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Participant statistics retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      totalParticipants:
+                        type: integer
+                        example: 500
+                      pendingParticipants:
+                        type: integer
+                        example: 150
+                      approvedParticipants:
+                        type: integer
+                        example: 300
+                      rejectedParticipants:
+                        type: integer
+                        example: 50
+                      recentParticipants:
+                        type: integer
+                        example: 75
+                      approvalRate:
+                        type: string
+                        example: '60.00'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/participants/{id}:
+    get:
+      tags:
+        - Event Participation
+      summary: Get Participant by ID
+      description: Get participant details by ID (Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Participant ID
+          schema:
+            type: string
+            example: 507f1f77bcf86cd799439011
+      responses:
+        '200':
+          description: Participant retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Participant retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      participant:
+                        $ref: '#/components/schemas/EventParticipant'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Participant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Event Participation
+      summary: Update Participant
+      description: Update participant information (Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Participant ID
+          schema:
+            type: string
+            example: 507f1f77bcf86cd799439011
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                emergencyContact:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      maxLength: 100
+                      example: Jane Doe
+                    phone:
+                      type: string
+                      pattern: '^[\+]?[1-9][\d]{0,15}$'
+                      example: '+1234567890'
+                    relationship:
+                      type: string
+                      maxLength: 50
+                      example: Spouse
+                dietaryRequirements:
+                  type: string
+                  maxLength: 500
+                  example: Vegetarian, no nuts
+                accessibilityNeeds:
+                  type: string
+                  maxLength: 500
+                  example: Wheelchair accessible seating required
+                notes:
+                  type: string
+                  maxLength: 1000
+                  example: VIP participant
+                checkedIn:
+                  type: boolean
+                  example: true
+      responses:
+        '200':
+          description: Participant updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Participant updated successfully
+                  data:
+                    type: object
+                    properties:
+                      participant:
+                        $ref: '#/components/schemas/EventParticipant'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Participant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Event Participation
+      summary: Delete Participant
+      description: Remove participant from event (Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Participant ID
+          schema:
+            type: string
+            example: 507f1f77bcf86cd799439011
+      responses:
+        '200':
+          description: Participant removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Participant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/participants/{id}/approve:
+    put:
+      tags:
+        - Event Participation
+      summary: Approve Participant
+      description: Approve a participant for an event (Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Participant ID
+          schema:
+            type: string
+            example: 507f1f77bcf86cd799439011
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes:
+                  type: string
+                  maxLength: 1000
+                  description: Additional notes for approval
+                  example: Approved based on early application
+      responses:
+        '200':
+          description: Participant approved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Participant approved successfully
+                  data:
+                    type: object
+                    properties:
+                      participant:
+                        $ref: '#/components/schemas/EventParticipant'
+        '400':
+          description: Validation error or event is full
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Participant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/participants/{id}/reject:
+    put:
+      tags:
+        - Event Participation
+      summary: Reject Participant
+      description: Reject a participant for an event (Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Participant ID
+          schema:
+            type: string
+            example: 507f1f77bcf86cd799439011
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rejectionReason:
+                  type: string
+                  maxLength: 500
+                  description: Reason for rejection
+                  example: Event is full
+                notes:
+                  type: string
+                  maxLength: 1000
+                  description: Additional notes
+                  example: Consider for next event
+              required: [rejectionReason]
+      responses:
+        '200':
+          description: Participant rejected successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Participant rejected successfully
+                  data:
+                    type: object
+                    properties:
+                      participant:
+                        $ref: '#/components/schemas/EventParticipant'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Participant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/participants/bulk-approve:
+    put:
+      tags:
+        - Event Participation
+      summary: Bulk Approve Participants
+      description: Approve multiple participants at once (Admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                participantIds:
+                  type: array
+                  items:
+                    type: string
+                  description: Array of participant IDs to approve
+                  example: ['507f1f77bcf86cd799439011', '507f1f77bcf86cd799439012']
+              required: [participantIds]
+      responses:
+        '200':
+          description: Participants approved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 5 participants approved successfully
+                  data:
+                    type: object
+                    properties:
+                      approvedCount:
+                        type: integer
+                        example: 5
+        '400':
+          description: Validation error or some events are full
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/admin/dashboard:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: Get Complete Dashboard Data
+      description: Get all dashboard data including summary cards, charts, and recent activities (Admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dashboard data retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Dashboard data retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      summaryCards:
+                        type: object
+                        properties:
+                          totalUsers:
+                            type: integer
+                            example: 150
+                          activeUsers:
+                            type: integer
+                            example: 140
+                          blockedUsers:
+                            type: integer
+                            example: 10
+                          totalEvents:
+                            type: integer
+                            example: 25
+                          activeEvents:
+                            type: integer
+                            example: 20
+                          totalParticipants:
+                            type: integer
+                            example: 500
+                          newUsersLast30Days:
+                            type: integer
+                            example: 15
+                          upcomingEventsNext7Days:
+                            type: integer
+                            example: 5
+                          usersPendingApproval:
+                            type: integer
+                            example: 25
+                          mostPopularEvent:
+                            type: object
+                            nullable: true
+                            properties:
+                              title:
+                                type: string
+                                example: JavaScript Conference 2024
+                              currentParticipants:
+                                type: integer
+                                example: 150
+                      charts:
+                        type: object
+                        properties:
+                          usersDistribution:
+                            type: object
+                            properties:
+                              labels:
+                                type: array
+                                items:
+                                  type: string
+                                example: ['Active Users', 'Blocked Users']
+                              data:
+                                type: array
+                                items:
+                                  type: integer
+                                example: [140, 10]
+                              colors:
+                                type: array
+                                items:
+                                  type: string
+                                example: ['#52c41a', '#ff4d4f']
+                          monthlyUsersEvents:
+                            type: object
+                            properties:
+                              labels:
+                                type: array
+                                items:
+                                  type: string
+                                example: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                              datasets:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    label:
+                                      type: string
+                                      example: New Users
+                                    data:
+                                      type: array
+                                      items:
+                                        type: integer
+                                      example: [5, 8, 12, 6, 9, 15, 18, 22, 16, 11, 7, 4]
+                          monthlyParticipants:
+                            type: object
+                            properties:
+                              labels:
+                                type: array
+                                items:
+                                  type: string
+                                example: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                              datasets:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    label:
+                                      type: string
+                                      example: Event Participants
+                                    data:
+                                      type: array
+                                      items:
+                                        type: integer
+                                      example: [25, 35, 45, 30, 40, 55, 65, 75, 60, 50, 35, 20]
+                      recentData:
+                        type: object
+                        properties:
+                          activities:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                type:
+                                  type: string
+                                  example: user_registration
+                                message:
+                                  type: string
+                                  example: John Doe registered
+                                timestamp:
+                                  type: string
+                                  format: date-time
+                                  example: '2024-01-15T10:30:00.000Z'
+                          upcomingEvents:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Event'
+                          mostPopularEvents:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Event'
+                          pendingApprovals:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/EventParticipant'
+                      growthMetrics:
+                        type: object
+                        properties:
+                          userGrowthPercentage:
+                            type: string
+                            example: '12.50'
+                          eventGrowthPercentage:
+                            type: string
+                            example: '8.75'
+                          participantGrowthPercentage:
+                            type: string
+                            example: '15.25'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/admin/dashboard/users/stats:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: Get User Statistics
+      description: Get user statistics for dashboard (Admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: User statistics retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      totalUsers:
+                        type: integer
+                        example: 150
+                      activeUsers:
+                        type: integer
+                        example: 140
+                      blockedUsers:
+                        type: integer
+                        example: 10
+                      newUsersLast30Days:
+                        type: integer
+                        example: 15
+                      newUsersLast7Days:
+                        type: integer
+                        example: 3
+                      userGrowthPercentage:
+                        type: string
+                        example: '12.50'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/admin/dashboard/events/stats:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: Get Event Statistics
+      description: Get event statistics for dashboard (Admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Event statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Event statistics retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      totalEvents:
+                        type: integer
+                        example: 25
+                      activeEvents:
+                        type: integer
+                        example: 20
+                      upcomingEventsNext7Days:
+                        type: integer
+                        example: 5
+                      recentEventsCount:
+                        type: integer
+                        example: 8
+                      eventGrowthPercentage:
+                        type: string
+                        example: '8.75'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/admin/dashboard/participants/stats:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: Get Participant Statistics
+      description: Get participant statistics for dashboard (Admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Participant statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Participant statistics retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      totalParticipants:
+                        type: integer
+                        example: 500
+                      pendingParticipants:
+                        type: integer
+                        example: 25
+                      approvedParticipants:
+                        type: integer
+                        example: 400
+                      rejectedParticipants:
+                        type: integer
+                        example: 75
+                      recentParticipantsCount:
+                        type: integer
+                        example: 50
+                      participantGrowthPercentage:
+                        type: string
+                        example: '15.25'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/admin/dashboard/charts/users-distribution:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: Get Users Distribution Chart Data
+      description: Get pie chart data for active vs blocked users (Admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Users distribution chart data retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Users distribution chart data retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      labels:
+                        type: array
+                        items:
+                          type: string
+                        example: ['Active Users', 'Blocked Users']
+                      data:
+                        type: array
+                        items:
+                          type: integer
+                        example: [140, 10]
+                      colors:
+                        type: array
+                        items:
+                          type: string
+                        example: ['#52c41a', '#ff4d4f']
+                      total:
+                        type: integer
+                        example: 150
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/admin/dashboard/charts/monthly-users-events:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: Get Monthly Users and Events Chart Data
+      description: Get bar chart data for monthly new users vs events (Admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Monthly users and events chart data retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Monthly users and events chart data retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      labels:
+                        type: array
+                        items:
+                          type: string
+                        example: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                      datasets:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            label:
+                              type: string
+                              example: New Users
+                            data:
+                              type: array
+                              items:
+                                type: integer
+                              example: [5, 8, 12, 6, 9, 15, 18, 22, 16, 11, 7, 4]
+                            backgroundColor:
+                              type: string
+                              example: '#1890ff'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/admin/dashboard/charts/monthly-participants:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: Get Monthly Participants Chart Data
+      description: Get bar chart data for monthly event participants (Admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Monthly participants chart data retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Monthly participants chart data retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      labels:
+                        type: array
+                        items:
+                          type: string
+                        example: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                      datasets:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            label:
+                              type: string
+                              example: Event Participants
+                            data:
+                              type: array
+                              items:
+                                type: integer
+                              example: [25, 35, 45, 30, 40, 55, 65, 75, 60, 50, 35, 20]
+                            backgroundColor:
+                              type: string
+                              example: '#722ed1'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/admin/dashboard/recent-activities:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: Get Recent Activities
+      description: Get recent system activities for dashboard (Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Number of activities to return
+          required: false
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Recent activities retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Recent activities retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      activities:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            type:
+                              type: string
+                              example: user_registration
+                            message:
+                              type: string
+                              example: John Doe registered
+                            timestamp:
+                              type: string
+                              format: date-time
+                              example: '2024-01-15T10:30:00.000Z'
+                            user:
+                              type: object
+                              nullable: true
+                              properties:
+                                name:
+                                  type: string
+                                  example: John Doe
+                                email:
+                                  type: string
+                                  example: john.doe@example.com
+                            event:
+                              type: object
+                              nullable: true
+                              properties:
+                                title:
+                                  type: string
+                                  example: JavaScript Conference 2024
+                                createdBy:
+                                  type: object
+                                  properties:
+                                    firstName:
+                                      type: string
+                                      example: Admin
+                                    lastName:
+                                      type: string
+                                      example: User
+                            participant:
+                              type: object
+                              nullable: true
+                              properties:
+                                user:
+                                  type: object
+                                  properties:
+                                    firstName:
+                                      type: string
+                                      example: John
+                                    lastName:
+                                      type: string
+                                      example: Doe
+                                event:
+                                  type: object
+                                  properties:
+                                    title:
+                                      type: string
+                                      example: JavaScript Conference 2024
+                                status:
+                                  type: string
+                                  example: pending
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/admin/dashboard/events/upcoming:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: Get Upcoming Events
+      description: Get upcoming events for dashboard (Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Number of events to return
+          required: false
+          schema:
+            type: integer
+            default: 10
+        - name: days
+          in: query
+          description: Number of days ahead to look for events
+          required: false
+          schema:
+            type: integer
+            default: 7
+      responses:
+        '200':
+          description: Upcoming events retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Upcoming events retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      events:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Event'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/admin/dashboard/events/popular:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: Get Most Popular Events
+      description: Get most popular events by participant count (Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Number of events to return
+          required: false
+          schema:
+            type: integer
+            default: 5
+      responses:
+        '200':
+          description: Most popular events retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Most popular events retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      events:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Event'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/admin/dashboard/participants/pending:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: Get Pending Approvals
+      description: Get participants pending approval (Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Number of participants to return
+          required: false
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Pending approvals retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Pending approvals retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      participants:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/EventParticipant'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1725,6 +3288,162 @@ components:
           description: Event last update timestamp
           example: '2024-01-15T10:30:00.000Z'
       required: [_id, title, description, eventDate, eventTime, location, maxParticipants, category, status, createdBy]
+
+    EventParticipant:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: Unique participant identifier
+          example: 507f1f77bcf86cd799439011
+        eventId:
+          type: object
+          description: Event information
+          properties:
+            _id:
+              type: string
+              example: 507f1f77bcf86cd799439011
+            title:
+              type: string
+              example: JavaScript Conference 2024
+            eventDate:
+              type: string
+              format: date
+              example: '2024-06-15'
+            location:
+              type: string
+              example: Convention Center, New York
+            status:
+              type: string
+              example: active
+        userId:
+          type: object
+          description: User information
+          properties:
+            _id:
+              type: string
+              example: 507f1f77bcf86cd799439011
+            firstName:
+              type: string
+              example: John
+            lastName:
+              type: string
+              example: Doe
+            email:
+              type: string
+              example: john.doe@example.com
+            phone:
+              type: string
+              example: '+1234567890'
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+          description: Participation status
+          example: pending
+        appliedAt:
+          type: string
+          format: date-time
+          description: When the user applied
+          example: '2024-01-15T10:30:00.000Z'
+        reviewedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the application was reviewed
+          example: '2024-01-16T14:30:00.000Z'
+        reviewedBy:
+          type: object
+          nullable: true
+          description: Admin who reviewed the application
+          properties:
+            _id:
+              type: string
+              example: 507f1f77bcf86cd799439011
+            firstName:
+              type: string
+              example: Admin
+            lastName:
+              type: string
+              example: User
+            email:
+              type: string
+              example: admin@eventmanagement.com
+        rejectionReason:
+          type: string
+          nullable: true
+          description: Reason for rejection
+          example: Event is full
+        notes:
+          type: string
+          nullable: true
+          description: Additional notes
+          example: VIP participant
+        emergencyContact:
+          type: object
+          nullable: true
+          properties:
+            name:
+              type: string
+              example: Jane Doe
+            phone:
+              type: string
+              example: '+1234567890'
+            relationship:
+              type: string
+              example: Spouse
+        dietaryRequirements:
+          type: string
+          nullable: true
+          description: Dietary requirements
+          example: Vegetarian, no nuts
+        accessibilityNeeds:
+          type: string
+          nullable: true
+          description: Accessibility needs
+          example: Wheelchair accessible seating required
+        checkedIn:
+          type: boolean
+          description: Whether participant has checked in
+          example: false
+        checkedInAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Check-in timestamp
+          example: '2024-06-15T09:00:00.000Z'
+        checkedInBy:
+          type: object
+          nullable: true
+          description: Admin who checked in the participant
+          properties:
+            _id:
+              type: string
+              example: 507f1f77bcf86cd799439011
+            firstName:
+              type: string
+              example: Admin
+            lastName:
+              type: string
+              example: User
+        canReapply:
+          type: boolean
+          description: Whether user can reapply
+          example: false
+        isActive:
+          type: boolean
+          description: Whether participant is active
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+          description: Participant creation timestamp
+          example: '2024-01-15T10:30:00.000Z'
+        updatedAt:
+          type: string
+          format: date-time
+          description: Participant last update timestamp
+          example: '2024-01-15T10:30:00.000Z'
+      required: [_id, eventId, userId, status, appliedAt]
 
     RegisterRequest:
       type: object

@@ -427,6 +427,113 @@ const schemas = {
         'any.required': 'Status is required',
       }),
   }),
+
+  // Join event validation
+  joinEvent: Joi.object({
+    emergencyContact: Joi.object({
+      name: Joi.string()
+        .max(100)
+        .optional()
+        .messages({
+          'string.max': 'Emergency contact name cannot exceed 100 characters',
+        }),
+      phone: Joi.string()
+        .pattern(/^[\+]?[1-9][\d]{0,15}$/)
+        .optional()
+        .messages({
+          'string.pattern.base': 'Please provide a valid phone number',
+        }),
+      relationship: Joi.string()
+        .max(50)
+        .optional()
+        .messages({
+          'string.max': 'Relationship cannot exceed 50 characters',
+        }),
+    }).optional(),
+    dietaryRequirements: Joi.string()
+      .max(500)
+      .optional()
+      .messages({
+        'string.max': 'Dietary requirements cannot exceed 500 characters',
+      }),
+    accessibilityNeeds: Joi.string()
+      .max(500)
+      .optional()
+      .messages({
+        'string.max': 'Accessibility needs cannot exceed 500 characters',
+      }),
+    notes: Joi.string()
+      .max(1000)
+      .optional()
+      .messages({
+        'string.max': 'Notes cannot exceed 1000 characters',
+      }),
+  }),
+
+  // Approve participant validation
+  approveParticipant: Joi.object({
+    notes: Joi.string()
+      .max(1000)
+      .optional()
+      .messages({
+        'string.max': 'Notes cannot exceed 1000 characters',
+      }),
+  }),
+
+  // Reject participant validation
+  rejectParticipant: Joi.object({
+    rejectionReason: Joi.string()
+      .max(500)
+      .required()
+      .messages({
+        'string.max': 'Rejection reason cannot exceed 500 characters',
+        'any.required': 'Rejection reason is required',
+      }),
+    notes: Joi.string()
+      .max(1000)
+      .optional()
+      .messages({
+        'string.max': 'Notes cannot exceed 1000 characters',
+      }),
+  }),
+
+  // Bulk approve participants validation
+  bulkApproveParticipants: Joi.object({
+    participantIds: Joi.array()
+      .items(Joi.string().required())
+      .min(1)
+      .required()
+      .messages({
+        'array.min': 'At least one participant ID is required',
+        'any.required': 'Participant IDs array is required',
+      }),
+  }),
+
+  // Update participant validation
+  updateParticipant: Joi.object({
+    emergencyContact: Joi.object({
+      name: Joi.string()
+        .max(100)
+        .optional(),
+      phone: Joi.string()
+        .pattern(/^[\+]?[1-9][\d]{0,15}$/)
+        .optional(),
+      relationship: Joi.string()
+        .max(50)
+        .optional(),
+    }).optional(),
+    dietaryRequirements: Joi.string()
+      .max(500)
+      .optional(),
+    accessibilityNeeds: Joi.string()
+      .max(500)
+      .optional(),
+    notes: Joi.string()
+      .max(1000)
+      .optional(),
+    checkedIn: Joi.boolean()
+      .optional(),
+  }),
 };
 
 module.exports = {
