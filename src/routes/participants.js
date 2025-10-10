@@ -12,6 +12,7 @@ router.get('/my-events', authenticate, authorize(['user']), ParticipantControlle
 router.get('/event/:eventId', authenticate, authorize(['admin', 'user']), ParticipantController.getEventParticipants);
 
 // Admin routes (require admin role)
+router.get('/pending', authenticate, authorize(['admin']), ParticipantController.getAllPendingParticipants);
 router.get('/stats', authenticate, authorize(['admin']), ParticipantController.getParticipantStats);
 router.get('/:id', authenticate, authorize(['admin']), ParticipantController.getParticipantById);
 router.put('/:id', authenticate, authorize(['admin']), validate(schemas.updateParticipant), ParticipantController.updateParticipant);

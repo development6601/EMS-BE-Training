@@ -178,6 +178,33 @@ class ParticipantController {
     }
   });
 
+  // @desc    Get all pending participants (Admin only)
+  // @route   GET /api/participants/pending
+  // @access  Private (Admin)
+  static getAllPendingParticipants = asyncHandler(async (req, res) => {
+    try {
+      const { page, limit, search, eventId, sortBy, sortOrder } = req.query;
+
+      const result = await ParticipantService.getAllPendingParticipants({
+        page: parseInt(page) || 1,
+        limit: parseInt(limit) || 20,
+        search,
+        eventId,
+        sortBy: sortBy || 'appliedAt',
+        sortOrder: sortOrder || 'desc',
+      });
+
+      res.status(200).json({
+        success: true,
+        message: 'All pending participants retrieved successfully',
+        data: result,
+      });
+    } catch (error) {
+      logger.error(`Get all pending participants error: ${error.message}`);
+      throw error;
+    }
+  });
+
   // @desc    Get participant statistics (Admin only)
   // @route   GET /api/participants/stats
   // @access  Private (Admin)

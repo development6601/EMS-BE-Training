@@ -377,6 +377,83 @@ class ParticipantService {
       throw error;
     }
   }
+
+  // Get all pending participants with advanced filtering
+  static async getAllPendingParticipants({
+    page = 1,
+    limit = 20,
+    search,
+    eventId,
+    sortBy = 'appliedAt',
+    sortOrder = 'desc',
+  }) {
+    try {
+      const query = { status: 'pending' };
+
+      // Add event filter if provided
+      if (eventId) {
+        query.eventId = eventId;
+      }
+
+      const skip = (page - 1) * limit;
+
+      // Build sort object
+      const sort = {};
+      sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+      let participantsQuery = EventParticipant.find(query)
+        .populate('userId', 'firstName lastName email phone')
+        .populate('eventId', 'title eventDate eventTime location category')
+        .populate('reviewedBy', 'firstName lastName email')
+        .sort(sort)
+        .skip(skip)
+        .limit(limit)
+        .select('appliedAt userId eventId notes emergencyContact dietaryRequirements accessibilityNeeds');
+
+      // Add search functionality
+      if (search) {
+        participantsQuery = participantsQuery.populate({
+          path: 'userId',
+          match: {
+            $or: [
+              { firstName: { $regex: search, $options: 'i' } },
+              { lastName: { $regex: search, $options: 'i' } },
+              { email: { $regex: search, $options: 'i' } },
+            ],
+          },
+        });
+      }
+
+      const [participants, total] = await Promise.all([
+        participantsQuery,
+        EventParticipant.countDocuments(query),
+      ]);
+
+      // Filter out null users if search was applied
+      const filteredParticipants = search 
+        ? participants.filter(p => p.userId !== null)
+        : participants;
+
+      return {
+        participants: filteredParticipants,
+        pagination: {
+          currentPage: page,
+          totalPages: Math.ceil(total / limit),
+          totalParticipants: total,
+          hasNextPage: page < Math.ceil(total / limit),
+          hasPrevPage: page > 1,
+        },
+        filters: {
+          search,
+          eventId,
+          sortBy,
+          sortOrder,
+        },
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = ParticipantService;

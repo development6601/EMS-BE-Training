@@ -1736,6 +1736,126 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /api/participants/pending:
+    get:
+      tags:
+        - Event Participation
+      summary: Get All Pending Participants
+      description: Get all participants with pending status for admin approval (Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Number of participants per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+        - name: search
+          in: query
+          description: Search by participant name or email
+          required: false
+          schema:
+            type: string
+        - name: eventId
+          in: query
+          description: Filter by specific event ID
+          required: false
+          schema:
+            type: string
+        - name: sortBy
+          in: query
+          description: Sort field
+          required: false
+          schema:
+            type: string
+            enum: [appliedAt, userId, eventId]
+            default: appliedAt
+        - name: sortOrder
+          in: query
+          description: Sort order
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: All pending participants retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: All pending participants retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      participants:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/EventParticipant'
+                      pagination:
+                        type: object
+                        properties:
+                          currentPage:
+                            type: integer
+                            example: 1
+                          totalPages:
+                            type: integer
+                            example: 5
+                          totalParticipants:
+                            type: integer
+                            example: 100
+                          hasNextPage:
+                            type: boolean
+                            example: true
+                          hasPrevPage:
+                            type: boolean
+                            example: false
+                      filters:
+                        type: object
+                        properties:
+                          search:
+                            type: string
+                            nullable: true
+                            example: john
+                          eventId:
+                            type: string
+                            nullable: true
+                            example: 507f1f77bcf86cd799439011
+                          sortBy:
+                            type: string
+                            example: appliedAt
+                          sortOrder:
+                            type: string
+                            example: desc
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /api/participants/stats:
     get:
       tags:
