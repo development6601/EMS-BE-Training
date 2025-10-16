@@ -118,6 +118,12 @@ const schemas = {
       theme: Joi.string().valid('light', 'dark', 'auto').optional(),
       language: Joi.string().max(5).optional(),
     }).optional(),
+    role: Joi.string()
+      .valid('admin', 'user')
+      .optional()
+      .messages({
+        'any.only': 'Role must be either "admin" or "user"',
+      }),
   }),
 
   // User login validation

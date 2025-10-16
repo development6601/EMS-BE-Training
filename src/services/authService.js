@@ -21,7 +21,8 @@ class AuthService {
         website,
         socialMedia,
         address,
-        preferences
+        preferences,
+        role
       } = userData;
 
       // Check if user already exists
@@ -44,6 +45,7 @@ class AuthService {
         socialMedia,
         address,
         preferences,
+        role,
       });
 
       await user.save();
