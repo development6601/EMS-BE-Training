@@ -19,6 +19,9 @@ class EventController {
         sortOrder 
       } = req.query;
       
+      // Get userId if user is logged in
+      const userId = req.user?.userId || null;
+      
       const result = await EventService.getAllEvents({
         page: parseInt(page) || 1,
         limit: parseInt(limit) || 10,
@@ -28,6 +31,7 @@ class EventController {
         isUpcoming,
         sortBy,
         sortOrder,
+        userId,
       });
 
       res.status(200).json({

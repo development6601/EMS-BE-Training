@@ -1,4 +1,5 @@
 const Event = require('../models/Event');
+const EventParticipant = require('../models/EventParticipant');
 const { uploadToCloudinary, deleteFromCloudinary } = require('../config/cloudinary');
 
 class EventService {
@@ -11,7 +12,8 @@ class EventService {
     status, 
     isUpcoming,
     sortBy = 'eventDate',
-    sortOrder = 'asc'
+    sortOrder = 'asc',
+    userId = null
   }) {
     try {
       const query = {};
@@ -55,8 +57,33 @@ class EventService {
         Event.countDocuments(query),
       ]);
 
+      // Get participation status for each event if user is logged in
+      let participationMap = {};
+      if (userId && events.length > 0) {
+        const eventIds = events.map(event => event._id);
+        const participants = await EventParticipant.find({
+          eventId: { $in: eventIds },
+          userId: userId,
+        }).select('eventId status');
+
+        // Create a map of eventId -> participation status
+        participants.forEach(participant => {
+          participationMap[participant.eventId.toString()] = participant.status;
+        });
+      }
+
+      // Add participation status to each event
+      // Convert to plain object to ensure participationStatus is included in JSON
+      const eventsWithParticipation = events.map(event => {
+        const eventObj = event.toObject();
+        const eventIdStr = event._id.toString();
+        // Set participationStatus to the user's status if logged in, otherwise null
+        eventObj.participationStatus = userId ? (participationMap[eventIdStr] || null) : null;
+        return eventObj;
+      });
+
       return {
-        events,
+        events: eventsWithParticipation,
         pagination: {
           currentPage: page,
           totalPages: Math.ceil(total / limit),

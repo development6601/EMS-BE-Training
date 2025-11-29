@@ -3,7 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const EventController = require('../controllers/eventController');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, authorize, optionalAuth } = require('../middleware/auth');
 const { validate, schemas } = require('../middleware/validation');
 
 const router = express.Router();
@@ -43,8 +43,8 @@ const upload = multer({
   },
 });
 
-// Public routes
-router.get('/', EventController.getAllEvents);
+// Public routes (optional auth to get participation status if logged in)
+router.get('/', optionalAuth, EventController.getAllEvents);
 router.get('/category/:category', EventController.getEventsByCategory);
 router.get('/:id', EventController.getEventById);
 
